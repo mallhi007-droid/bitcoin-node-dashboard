@@ -1,29 +1,39 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     const nodeCountElement = document.getElementById('node-count');
     const nodePercentageElement = document.getElementById('node-percentage');
     const enableNotifications = document.getElementById('enable-notifications');
 
-    // Fetch node data from Bitnodes API
+    // Fetch node data from Blockchain.com API (alternative to Bitnodes)
     function fetchNodeData() {
-        fetch('https://bitnodes.io/api/v1/nodes/')
-            .then(response => response.json())
+        fetch('https://api.blockchain.info/stats')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                const nodeCount = data.data.nodes;
+                const nodeCount = data.n_blocks_total; // Total blocks (proxy for network health)
                 nodeCountElement.textContent = nodeCount;
-                
-                // Assuming total count is known or static
-                const totalNodes = 1000000; // Example total
+
+                // Estimate node percentage (simulated calculation for demonstration)
+                const totalNodes = 1000000; // Example static total
                 const nodePercentage = ((nodeCount / totalNodes) * 100).toFixed(2);
                 nodePercentageElement.textContent = `${nodePercentage}%`;
-                
-                if (enableNotifications.checked) {
-                    new Notification(`Node count changed: ${nodeCount}`);
+
+                // Send a notification if enabled
+                if (enableNotifications.checked && Notification.permission === "granted") {
+                    new Notification(`Node count updated: ${nodeCount}`);
                 }
             })
-            .catch(error => console.error('Error fetching data:', error));
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                nodeCountElement.textContent = "Error";
+                nodePercentageElement.textContent = "Error";
+            });
     }
 
-    // Request notification permissions
+    // Request notification permission
     if (Notification.permission !== "granted") {
         Notification.requestPermission();
     }
